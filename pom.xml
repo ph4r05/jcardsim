@@ -377,7 +377,7 @@
                         <configuration>
                             <target>
                                 <path id="compileClasspath">
-                                    <file name="${project.build.directory}/jcardsim-${project.version}.jar" />
+                                    <file name="${project.build.directory}/${project.artifactId}-${project.version}.jar" />
                                     <file name="${user.home}/.m2/repository/junit/junit/${junit.version}/junit-${junit.version}.jar" />
                                 </path>
 
@@ -387,7 +387,7 @@
                                 <mkdir dir="${ant.build.dir}/reports"/>
                                 <mkdir dir="${ant.build.dir}/bin/unpacked"/>
                                 <!-- remove sign -->
-                                <unzip src="${project.build.directory}/jcardsim-${project.version}-android.jar"
+                                <unzip src="${project.build.directory}/${project.artifactId}-${project.version}-android.jar"
                                         dest="${ant.build.dir}/bin/unpacked">
                                     <patternset>
                                         <exclude name="**/*.SF"/>
@@ -414,7 +414,7 @@
                                     <fileset dir="${project.basedir}/src/test/resources" />
                                 </copy>
 
-                                <echo>Testing shaded JAR: jcardsim-${project.version}-android.jar</echo>
+                                <echo>Testing shaded JAR: ${project.artifactId}-${project.version}-android.jar</echo>
                                 <junit fork="yes" forkmode="once" haltonfailure="yes" printsummary="true">
 				    <jvmarg value="-noverify"/>
                                     <classpath>
