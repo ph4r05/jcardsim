@@ -263,6 +263,7 @@
                         <link>http://docs.oracle.com/javase/7/docs/jre/api/security/smartcardio/spec/</link>
                     </links>
                     <author>false</author>
+                    <defaultAuthor>Licel LLC</defaultAuthor>
                 </configuration>
             </plugin>
             <plugin>
