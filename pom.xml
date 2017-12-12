@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.licel</groupId>
-    <version>3.0.5-SNAPSHOT</version>
+    <groupId>com.klinec</groupId>
+    <version>3.0.5.1</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
@@ -41,31 +41,58 @@
         <java.version>1.5</java.version>
         <jcApiVersion>3.0.5</jcApiVersion>
     </properties>
-    
+
+    <!-- Maven distribution repositories -->
     <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray-jcardsim-maven-jCardSim</id>
-            <name>jcardsim-maven-jCardSim</name>
-            <url>https://api.bintray.com/maven/jcardsim/maven/jCardSim</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>    
 
     <scm>
-        <connection>scm:git:git@github.com:licel/jcardsim.git</connection>
-        <developerConnection>scm:git:git@github.com:licel/jcardsim.git</developerConnection>
-        <url>git@github.com:licel/jcardsim.git</url>
+        <connection>scm:git:git@github.com:ph4r05/jcardsim.git</connection>
+        <developerConnection>scm:git:git@github.com:ph4r05/jcardsim.git</developerConnection>
+        <url>git@github.com:ph4r05/jcardsim.git</url>
     </scm>
-    
+
+    <!-- Releasing: http://central.sonatype.org/pages/apache-maven.html -->
     <profiles>
         <profile>
-            <id>sign</id>
-            <activation>
-                <property>
-                    <name>keystoreLocation</name>
-                </property>
-            </activation>
+            <id>release</id>
             <build>
                 <plugins>
+
+                    <!-- Release -->
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.3</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>2.5</version>
+                        <configuration>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                            <useReleaseProfile>false</useReleaseProfile>
+                            <releaseProfiles>release</releaseProfiles>
+                            <goals>deploy</goals>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Sources & Javadocs -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -73,51 +100,44 @@
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <phase>verify</phase>
                                 <goals>
                                     <goal>jar-no-fork</goal>
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>                    
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>${maven-javadoc-plugin.version}</version>
-                        <configuration>
-                            <author>false</author>
-                            <bottom>&nbsp;</bottom>
-                        </configuration>    
-                    </plugin>            
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jarsigner-plugin</artifactId>
-                        <version>1.2</version>
+                        <version>2.9.1</version>
                         <executions>
                             <execution>
-                                <id>sign</id>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- GPG signature -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
                             </execution>
-                            <execution>
-                                <id>verify</id>
-                                <goals>
-                                    <goal>verify</goal>
-                                </goals>
-                            </execution>
                         </executions>
-                        <configuration>
-                            <keystore>${keystoreLocation}</keystore>
-                            <alias>${keyAlias}</alias>
-                            <storepass>${keystorePass}</storepass>
-                            <keypass>${keyPass}</keypass>
-                            <storetype>${storeType}</storetype>
-                        </configuration>
-                    </plugin>                
+                    </plugin>
                 </plugins>
             </build>
-        </profile> 
+        </profile>
     </profiles>
   
     <dependencies>
@@ -205,6 +225,7 @@
             </plugin>
 	    <plugin>
         	<artifactId>maven-surefire-plugin</artifactId>
+            <version>2.19.1</version>
 		<configuration>
 		    <argLine>-noverify</argLine>
 		</configuration>
