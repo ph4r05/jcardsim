@@ -25,6 +25,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -81,6 +83,17 @@ public class SimulatorRuntime {
         try {
             Constructor<?> ctor = APDU.class.getDeclaredConstructors()[0];
             ctor.setAccessible(true);
+
+            if (ctor.getParameterTypes().length != 1) {
+                StringBuilder sb = new StringBuilder("Invalid APDU loaded. You may have JC API in your classpath before JCardSim. Classpath: ");
+                for (URL url: ((URLClassLoader) (Thread.currentThread().getContextClassLoader())).getURLs()) {
+                    sb.append(url.getFile());
+                    sb.append(":");
+                }
+                
+                System.err.println(sb.toString());
+                throw new RuntimeException("Classloader error, patched proxy versions not loaded");
+            }
 
             shortAPDU = (APDU) ctor.newInstance(false);
             extendedAPDU = (APDU) ctor.newInstance(true);
@@ -540,7 +553,12 @@ public class SimulatorRuntime {
      * @return always false
      */
     public boolean isObjectDeletionSupported() {
-        return false;
+        final String envSupported = System.getenv("JCARDSIM_OBJECT_DELETION_SUPPORTED");
+        if (envSupported != null) {
+            return Integer.parseInt(envSupported) > 0;
+        }
+        final String propSupported = System.getProperty("com.licel.jcardsim.object_deletion_supported", "0");
+        return Integer.parseInt(propSupported) > 0;
     }
 
     /**
