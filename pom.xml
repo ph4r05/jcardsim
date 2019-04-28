@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.klinec</groupId>
-    <version>3.0.5.4</version>
+    <version>3.0.5.5</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
