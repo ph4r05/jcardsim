@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.klinec</groupId>
-    <version>3.0.5.5</version>
+    <version>3.0.5.6</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
@@ -224,14 +224,14 @@
                     </execution>
                 </executions>
             </plugin>
-	    <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-        	<artifactId>maven-surefire-plugin</artifactId>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
-		<configuration>
-		    <argLine>-noverify</argLine>
-		</configuration>
-	    </plugin>                                      
+                <configuration>
+                    <argLine>-noverify</argLine>
+                </configuration>
+            </plugin>
             <!-- patch -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -239,18 +239,33 @@
                 <version>1.4.0</version>
                 <executions>
                     <execution>
+                        <id>cardApi</id>
                         <phase>process-classes</phase>
                         <goals>
                             <goal>java</goal>
                         </goals>
+                        <configuration>
+                            <mainClass>com.licel.jcardsim.utils.JavaCardApiProcessor</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}/classes</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pom</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.licel.jcardsim.utils.PomProcessor</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <mainClass>com.licel.jcardsim.utils.JavaCardApiProcessor</mainClass>  
-                    <arguments>
-                        <argument>${project.build.directory}/classes</argument>
-                    </arguments>
-                </configuration>
+
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -269,6 +284,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>1.7</version>
                 <configuration>
+                    <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
                     <minimizeJar>true</minimizeJar>
                     <relocations>
                         <relocation>
@@ -280,6 +296,12 @@
                         <includes>
                             <include>org.bouncycastle:*</include>
                         </includes>
+                        <excludes>
+                            <exclude>oracle.javacard:*</exclude>
+                            <exclude>oracle.javacard:*:*:*</exclude>
+                            <exclude>*:api_classic</exclude>
+                            <exclude>oracle.javacard:api_classic</exclude>
+                        </excludes>
                     </artifactSet>
                     <filters>
                         <filter>
@@ -300,11 +322,18 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
                             <minimizeJar>true</minimizeJar>
                             <artifactSet>
                                 <includes>
                                     <include>org.bouncycastle:*</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>oracle.javacard:*</exclude>
+                                    <exclude>oracle.javacard:*:*:*</exclude>
+                                    <exclude>*:api_classic</exclude>
+                                    <exclude>oracle.javacard:api_classic</exclude>
+                                </excludes>
                             </artifactSet>
                             <filters>
                                 <filter>
@@ -325,10 +354,17 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
                             <artifactSet>
                                 <includes>
                                     <include>org.bouncycastle:*</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>oracle.javacard:*</exclude>
+                                    <exclude>oracle.javacard:*:*:*</exclude>
+                                    <exclude>*:api_classic</exclude>
+                                    <exclude>oracle.javacard:api_classic</exclude>
+                                </excludes>
                             </artifactSet>
                             <minimizeJar>true</minimizeJar>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
@@ -418,7 +454,7 @@
 
                                 <echo>Testing shaded JAR: ${project.artifactId}-${project.version}-android.jar</echo>
                                 <junit fork="yes" forkmode="once" haltonfailure="yes" printsummary="true">
-				    <jvmarg value="-noverify"/>
+				                    <jvmarg value="-noverify"/>
                                     <classpath>
                                         <path refid="testClasspath" />
                                         <pathelement location="${ant.build.dir}/bin" />
