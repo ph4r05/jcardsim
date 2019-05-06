@@ -299,15 +299,10 @@ public class AsymmetricSignatureImpl extends Signature implements SignatureMessa
         throw new UnsupportedOperationException("Not supported yet."); 
     }
 
-    protected boolean supportDsaSignerComputedHash(){
-        final String propSupported = System.getProperty("com.licel.jcardsim.sign.dsasigner.computedhash", "0");
-        return Integer.parseInt(propSupported) > 0;
-    }
-
     protected boolean supportedComputedHashSigner(){
         return (engine instanceof RSADigestSigner)
                 || (engine instanceof PSSSigner)
-                || (supportDsaSignerComputedHash() && engine instanceof DSADigestSigner);
+                || (engine instanceof DSADigestSigner);
     }
 
     protected String getDigestFromSigner(){
