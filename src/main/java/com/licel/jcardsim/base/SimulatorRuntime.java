@@ -21,12 +21,16 @@ import com.licel.jcardsim.utils.ByteUtil;
 import javacard.framework.*;
 import javacardx.apdu.ExtendedLength;
 
+import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,16 +76,59 @@ public class SimulatorRuntime {
     protected byte transactionDepth = 0;
     /** previousActiveObject */
     protected Object previousActiveObject;
+    protected SimClassLoader classLoader;
 
     public SimulatorRuntime() {
         this(new TransientMemory());
     }
 
+    static Constructor<?> getApduConstructor(Class<?> kls){
+        try {
+            if (kls == null){
+                kls = APDU.class;
+            }
+
+            final Constructor<?>[] ctors = kls.getDeclaredConstructors();
+            for (Constructor<?> ctor : ctors) {
+                if (ctor.getParameterTypes().length > 0){
+                    return ctor;
+                }
+            }
+        } catch(Exception e){
+            throw new RuntimeException("Proxy APDU constructor not found", e);
+        }
+
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     public SimulatorRuntime(TransientMemory transientMemory) {
         this.transientMemory = transientMemory;
+        // TODO: load custom classes from current JAR
+        // TODO:    1. Find our JAR
+        // TODO:    2. Custom classloader that uses our JAR
+        // TODO: Java Proxy? CGLib? Javassist?
         try {
-            Constructor<?> ctor = APDU.class.getDeclaredConstructors()[0];
+            Constructor<?> ctor = getApduConstructor(null);
+
+            if (ctor == null){
+                if (classLoader == null){
+                    String pathJar = null;
+                    try {
+                        pathJar = SimClassLoader.tryFindPathJar(null);
+                    } catch(Exception e){
+                        throw new RuntimeException("Proxy APDU not found & could not find JCardSim JAR (running from dir?)", e);
+                    }
+
+                    classLoader = new SimClassLoader(Collections.singletonList(new URL("file:" + pathJar)));
+                    final Class<?> aClass = classLoader.loadClass("javacard.framework.APDU", true);
+
+                    System.err.println(aClass);
+                    ctor = getApduConstructor(aClass);
+                    System.err.println(ctor);
+                }
+            }
+
             ctor.setAccessible(true);
 
             if (ctor.getParameterTypes().length != 1) {
