@@ -78,13 +78,14 @@ public class JavaCardApiProcessor {
     public static void proxyClass(File buildDir, String proxyClassFile, String targetClassFile, boolean skipConstructor) throws IOException {
         File proxyFile = new File(buildDir, proxyClassFile.replace(".", File.separator) + ".class");
         FileInputStream fProxyClass = new FileInputStream(proxyFile);
-        FileInputStream fTargetClass = new FileInputStream(new File(buildDir, targetClassFile.replace(".", File.separator) + ".class"));
+        File file = new File(buildDir, targetClassFile.replace(".", File.separator) + ".class");
+        FileInputStream fTargetClass = new FileInputStream(file);
         ClassReader crProxy = new ClassReader(fProxyClass);
         ClassNode cnProxy = new ClassNode();
-        crProxy.accept(cnProxy, 0);
+        crProxy.accept(cnProxy, ClassReader.SKIP_FRAMES);// ClassReader.EXPAND_FRAMES);
         ClassReader crTarget = new ClassReader(fTargetClass);
         ClassNode cnTarget = new ClassNode();
-        crTarget.accept(cnTarget, 0);
+        crTarget.accept(cnTarget, ClassReader.EXPAND_FRAMES);
 
         ClassNode cnProxyRemapped = new ClassNode();
         HashMap<String, String> map = new HashMap();
@@ -101,7 +102,7 @@ public class JavaCardApiProcessor {
         cnTarget.accept(ma);
         fProxyClass.close();
         fTargetClass.close();
-        FileOutputStream fos = new FileOutputStream(new File(buildDir, targetClassFile.replace(".", File.separator) + ".class"));
+        FileOutputStream fos = new FileOutputStream(file);
         fos.write(cw.toByteArray());
         fos.close();
         // remove proxy class
@@ -113,7 +114,7 @@ public class JavaCardApiProcessor {
         FileInputStream fProxyClass = new FileInputStream(sourceFile);
         ClassReader crProxy = new ClassReader(fProxyClass);
         ClassNode cnProxy = new ClassNode();
-        crProxy.accept(cnProxy, 0);
+        crProxy.accept(cnProxy, ClassReader.SKIP_FRAMES);
 
         ClassWriter cw = new ClassWriter(0);
         map.put(cnProxy.name, targetClassName.replace(".", "/"));
