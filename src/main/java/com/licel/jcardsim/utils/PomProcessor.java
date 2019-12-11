@@ -30,7 +30,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 
 /**
- * Injects jCardSim’s code into Java Card Api Reference Classes
+ * Removes jcard api_classic from the dependencies in POM
  */
 public class PomProcessor {
 
