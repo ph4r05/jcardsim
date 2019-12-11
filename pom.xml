@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.klinec</groupId>
-    <version>3.0.5.7</version>
+    <version>3.0.5.8</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
@@ -159,10 +159,30 @@
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.ow2.asm</groupId>-->
+<!--            <artifactId>asm-all</artifactId>-->
+<!--            <version>5.2</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-all</artifactId>
-            <version>5.0.4</version>
+            <artifactId>asm-commons</artifactId>
+            <version>7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-tree</artifactId>
+            <version>7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-util</artifactId>
+            <version>7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-analysis</artifactId>
+            <version>7.2</version>
         </dependency>
     </dependencies>
 

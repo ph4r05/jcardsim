@@ -22,14 +22,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import static org.objectweb.asm.Opcodes.ASM4;
-import org.objectweb.asm.commons.RemappingClassAdapter;
+
+import org.objectweb.asm.*;
+
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -76,16 +72,18 @@ public class JavaCardApiProcessor {
     }
 
     public static void proxyClass(File buildDir, String proxyClassFile, String targetClassFile, boolean skipConstructor) throws IOException {
-        File proxyFile = new File(buildDir, proxyClassFile.replace(".", File.separator) + ".class");
+        File proxyFile = new File(buildDir, proxyClassFile.replace(".", File.separator) + ".class");  // our proxy file
         FileInputStream fProxyClass = new FileInputStream(proxyFile);
-        File file = new File(buildDir, targetClassFile.replace(".", File.separator) + ".class");
+        File file = new File(buildDir, targetClassFile.replace(".", File.separator) + ".class");  // javacard file
         FileInputStream fTargetClass = new FileInputStream(file);
+        System.out.println("Process: " + proxyClassFile + " -> " + targetClassFile);
+
         ClassReader crProxy = new ClassReader(fProxyClass);
         ClassNode cnProxy = new ClassNode();
-        crProxy.accept(cnProxy, ClassReader.SKIP_FRAMES);// ClassReader.EXPAND_FRAMES);
+        crProxy.accept(cnProxy, 0);
         ClassReader crTarget = new ClassReader(fTargetClass);
         ClassNode cnTarget = new ClassNode();
-        crTarget.accept(cnTarget, ClassReader.EXPAND_FRAMES);
+        crTarget.accept(cnTarget, 0);
 
         ClassNode cnProxyRemapped = new ClassNode();
         HashMap<String, String> map = new HashMap();
@@ -94,10 +92,11 @@ public class JavaCardApiProcessor {
         for (int i = 0; i < 10; i++) {
             map.put(cnProxy.name + "$1", cnTarget.name + "$1");
         }
-        RemappingClassAdapter ra = new RemappingClassAdapter(cnProxyRemapped, new SimpleRemapper(map));
+
+        ClassRemapper ra = new ClassRemapper(cnProxyRemapped, new SimpleRemapper(map));
         cnProxy.accept(ra);
 
-        ClassWriter cw = new ClassWriter(crTarget, 0);
+        ClassWriter cw = new ClassWriterAdapter(crTarget, ClassWriter.COMPUTE_FRAMES);
         MergeAdapter ma = new MergeAdapter(cw, cnProxyRemapped, skipConstructor);
         cnTarget.accept(ma);
         fProxyClass.close();
@@ -114,11 +113,12 @@ public class JavaCardApiProcessor {
         FileInputStream fProxyClass = new FileInputStream(sourceFile);
         ClassReader crProxy = new ClassReader(fProxyClass);
         ClassNode cnProxy = new ClassNode();
-        crProxy.accept(cnProxy, ClassReader.SKIP_FRAMES);
+        crProxy.accept(cnProxy, 0);
 
-        ClassWriter cw = new ClassWriter(0);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         map.put(cnProxy.name, targetClassName.replace(".", "/"));
-        RemappingClassAdapter ra = new RemappingClassAdapter(cw, new SimpleRemapper(map));
+
+        ClassRemapper ra = new ClassRemapper(cw, new SimpleRemapper(map));
         cnProxy.accept(ra);
 
         fProxyClass.close();
@@ -135,7 +135,7 @@ public class JavaCardApiProcessor {
         ClassReader crTarget = new ClassReader(fTargetClass);
         ClassNode cnTarget = new ClassNode();
         crTarget.accept(cnTarget, 0);
-        ClassWriter cw = new ClassWriter(0);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         ExceptionClassProxy ecc = new ExceptionClassProxy(cw, cnTarget.version, cnTarget.name, cnTarget.superName);
         cnTarget.accept(ecc);
 
@@ -152,7 +152,7 @@ public class JavaCardApiProcessor {
         String className;
 
         public ExceptionClassProxy(ClassWriter cv, int classVersion, String exceptionClassName, String superClassName) {
-            super(ASM4, cv);
+            super(ASM5, cv);
             this.superClassName = superClassName;
             this.className = exceptionClassName;
         }
@@ -197,13 +197,29 @@ public class JavaCardApiProcessor {
     static class ClassAdapter extends ClassNode implements Opcodes {
 
         public ClassAdapter(ClassVisitor cv) {
-            super(ASM4);
+            super(ASM5);
             this.cv = cv;
         }
 
         @Override
         public void visitEnd() {
             accept(cv);
+        }
+    }
+
+    static class ClassWriterAdapter extends ClassWriter {
+
+        public ClassWriterAdapter(int flags) {
+            super(flags);
+        }
+
+        public ClassWriterAdapter(ClassReader classReader, int flags) {
+            super(classReader, flags);
+        }
+
+        @Override
+        protected String getCommonSuperClass(String type1, String type2) {
+            return super.getCommonSuperClass(type1, type2);
         }
     }
 
@@ -242,6 +258,7 @@ public class JavaCardApiProcessor {
             super.visit(version, access, name,
                     signature, superName, interfaces);
             this.cname = name;
+            System.out.println(" .. " + name);
         }
 
         @Override
@@ -262,11 +279,38 @@ public class JavaCardApiProcessor {
                 System.out.println("skip field: " + cname + name + desc);
                 return null;
             }
+            System.out.println("Use original:" + cname + name + desc);
             return super.visitField(access, name, desc, signature, value);
         }
 
         @Override
+        public void visitSource(String file, String debug) {
+            System.out.println(String.format("src: %s: %s", file, debug));
+            super.visitSource(file, debug);
+        }
+
+        @Override
+        public void visitOuterClass(String owner, String name, String desc) {
+            System.out.println(String.format("ocks: %s: %s %s", owner, name, desc));
+            super.visitOuterClass(owner, name, desc);
+        }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            System.out.println(String.format("anot: %s", desc));
+            return super.visitAnnotation(desc, visible);
+        }
+
+        @Override
+        public void check(int api) {
+            super.check(api);
+        }
+
+        @Override
         public void visitEnd() {
+            System.out.println("VisitEnd");
+            super.visitEnd();
+
             for (Iterator it = cn.fields.iterator();
                     it.hasNext();) {
                 FieldNode fn = (FieldNode) it.next();
@@ -286,9 +330,14 @@ public class JavaCardApiProcessor {
                                 mn.access, mn.name, mn.desc,
                                 mn.signature, exceptions);
                 mn.instructions.resetLabels();
-                mn.accept(mv);
+                System.out.println(String.format("v: %s: %s.%s%s, %d %d", cn.sourceFile, cn.name, mn.name, mn.desc, mn.maxStack, mn.maxLocals));
+                try {
+                    mn.accept(mv);
+                } catch (Exception e){
+                    System.out.println(String.format(" - Ex: %s", e));
+                    throw e;
+                }
             }
-            super.visitEnd();
         }
     }
 }
