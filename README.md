@@ -5,6 +5,9 @@ jCardSim (Official repo of the [jCardSim](http://jcardsim.org) project)
 
 ![alt text](https://licelus.com/wp-content/uploads/DCA2013_Badge_Winner.jpg "jCardSim is a winner of Duke's Choice 2013")
 
+This is a forked repo with additional fixes, e.g., POM file fixes, `-noverify` not needed / bytecode generation fixes, 
+java 9+ compilation fixes.
+
 jCardSim is an open source simulator for Java Card, v.2.2/3.0.5:
 
 * `javacard.framework.*`
@@ -47,13 +50,19 @@ assertEquals(0x9000, response.getSW());
 
 *Latest stable release 2.2.2*: https://github.com/licel/jcardsim/raw/master/jcardsim-2.2.2-all.jar
 
+## Maven
 *Maven Central Repository*
 ```xml
 <dependency>
   <groupId>com.klinec</groupId>
   <artifactId>jcardsim</artifactId>
-  <version>3.5.0.4</version>
+  <version>3.5.0.9</version>
 </dependency>
+```
+
+Gradle:
+```groovy
+compile('com.klinec:jcardsim:3.0.5.9')
 ```
 
 ### What is the difference from Oracle Java Card Development Kit simulator?
