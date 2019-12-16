@@ -30,7 +30,9 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 
 /**
- * Removes jcard api_classic from the dependencies in POM
+ * Removes redundant dependencies from the POM file
+ * oracle.javacard:api_classic
+ * org.ow2.asm:*
  */
 public class PomProcessor {
 
@@ -57,9 +59,9 @@ public class PomProcessor {
             dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(depPom);
 
-            deleteElement(doc);
+            deleteRedundantDeps(doc);
 
-            //write the updated document to file or console
+            // Write the updated document to file or console
             doc.getDocumentElement().normalize();
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -67,7 +69,7 @@ public class PomProcessor {
             StreamResult result = new StreamResult(depPom);
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.transform(source, result);
-            System.out.println("XML file updated successfully");
+            System.out.println("pom.xml updated successfully");
 
         } catch(Exception e){
             System.err.println(e.getMessage());
@@ -75,8 +77,8 @@ public class PomProcessor {
         }
     }
 
-    private static void deleteElement(Document doc) {
-        NodeList projects = doc.getElementsByTagName("project");
+    private static void deleteRedundantDeps(Document doc) {
+        final NodeList projects = doc.getElementsByTagName("project");
         if (projects.getLength() < 1){
             System.err.println("Invalid number of project elements");
             return;
@@ -88,7 +90,7 @@ public class PomProcessor {
             return;
         }
 
-        Element elProject = (Element) project;
+        final Element elProject = (Element) project;
         final NodeList dependencies = elProject.getElementsByTagName("dependencies");
         if (dependencies.getLength() < 1){
             System.err.println("Invalid num of dependencies");
@@ -115,27 +117,52 @@ public class PomProcessor {
             return;
         }
 
-        Element elDeps = (Element) nDeps;
+        final Element elDeps = (Element) nDeps;
         final NodeList depsNodeList = elDeps.getElementsByTagName("dependency");
         if (depsNodeList.getLength() < 1){
             System.err.println("No deps found");
             return;
         }
 
-        for(int i=0; i < depsNodeList.getLength(); i++){
+        System.out.println(String.format("Number of dependencies found: %d", depsNodeList.getLength()));
+        int i = 0;
+        while(i < depsNodeList.getLength()){
             final Element elDep = (Element)depsNodeList.item(i);
             final NodeList nArtifacts = elDep.getElementsByTagName("artifactId");
-            if (nArtifacts.getLength() == 0){
+            final NodeList nGroupId = elDep.getElementsByTagName("groupId");
+
+            String artifactId = null;
+            String groupId = null;
+
+            if (nArtifacts.getLength() > 0) {
+                final Element elArtifact = (Element) nArtifacts.item(0);
+                final Node alChild = elArtifact.getFirstChild();
+                artifactId = alChild.getNodeType() == Node.TEXT_NODE ? alChild.getNodeValue() : null;
+            }
+
+            if (nGroupId.getLength() > 0) {
+                final Element elGroupId = (Element) nGroupId.item(0);
+                final Node alChild = elGroupId.getFirstChild();
+                groupId = alChild.getNodeType() == Node.TEXT_NODE ? alChild.getNodeValue() : null;
+            }
+
+            System.out.println(String.format("Dependency: %s:%s", groupId, artifactId));
+
+            // Artifact ID based rule: oracle.javacard:api_classic
+            if ("api_classic".equalsIgnoreCase(artifactId)) {
+                System.out.println("oracle.javacard:api_classic found in dependencies, removing");
+                elDeps.removeChild(elDep);
                 continue;
             }
 
-            final Element elArtifact = (Element)nArtifacts.item(0);
-            final Node alChild = elArtifact.getFirstChild();
-            if (alChild.getNodeType() == Node.TEXT_NODE && alChild.getNodeValue().equalsIgnoreCase("api_classic")){
-                System.err.println("api_classic found in dependencies");
+            // Group based rule: org.ow2.asm:*
+            if ("org.ow2.asm".equalsIgnoreCase(groupId)) {
+                System.out.println("org.ow2.asm:* found in dependencies, removing");
                 elDeps.removeChild(elDep);
-                return;
+                continue;
             }
+
+            i += 1;
         }
     }
 }
