@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.klinec</groupId>
-    <version>3.0.5.9</version>
+    <version>3.0.5.11</version>
     <packaging>jar</packaging>
     <url>http://maven.apache.org</url>
 
     <artifactId>jcardsim</artifactId>
-    <name>Java Card Runime Environment Simulator</name>
+    <name>Java Card Runtime Environment Simulator</name>
     <description>jCardSim is open-source library contains implementation of Java Card API</description>
     
     <organization>
@@ -240,14 +240,14 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+	    <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
-                <configuration>
-                    <argLine>-noverify</argLine>
-                </configuration>
-            </plugin>
+        	<artifactId>maven-surefire-plugin</artifactId>
+                <version>2.21.0</version>
+		<configuration>
+		    <argLine>-noverify</argLine>
+		</configuration>
+	    </plugin>                                      
             <!-- patch -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
