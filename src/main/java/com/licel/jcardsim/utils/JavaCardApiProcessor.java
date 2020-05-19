@@ -72,12 +72,9 @@ public class JavaCardApiProcessor {
     }
 
     public static void proxyClass(File buildDir, String proxyClassFile, String targetClassFile, boolean skipConstructor) throws IOException {
-        File proxyFile = new File(buildDir, proxyClassFile.replace(".", File.separator) + ".class");  // our proxy file
+        File proxyFile = new File(buildDir, proxyClassFile.replace(".", File.separator) + ".class");
         FileInputStream fProxyClass = new FileInputStream(proxyFile);
-        File file = new File(buildDir, targetClassFile.replace(".", File.separator) + ".class");  // javacard file
-        FileInputStream fTargetClass = new FileInputStream(file);
-        System.out.println("Process: " + proxyClassFile + " -> " + targetClassFile);
-
+        FileInputStream fTargetClass = new FileInputStream(new File(buildDir, targetClassFile.replace(".", File.separator) + ".class"));
         ClassReader crProxy = new ClassReader(fProxyClass);
         ClassNode cnProxy = new ClassNode();
         crProxy.accept(cnProxy, 0);
@@ -96,12 +93,12 @@ public class JavaCardApiProcessor {
         ClassRemapper ra = new ClassRemapper(cnProxyRemapped, new SimpleRemapper(map));
         cnProxy.accept(ra);
 
-        ClassWriter cw = new ClassWriterAdapter(crTarget, ClassWriter.COMPUTE_FRAMES);
+        ClassWriter cw = new ClassWriter(crTarget, ClassWriter.COMPUTE_FRAMES);
         MergeAdapter ma = new MergeAdapter(cw, cnProxyRemapped, skipConstructor);
         cnTarget.accept(ma);
         fProxyClass.close();
         fTargetClass.close();
-        FileOutputStream fos = new FileOutputStream(file);
+        FileOutputStream fos = new FileOutputStream(new File(buildDir, targetClassFile.replace(".", File.separator) + ".class"));
         fos.write(cw.toByteArray());
         fos.close();
         // remove proxy class
@@ -117,7 +114,6 @@ public class JavaCardApiProcessor {
 
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         map.put(cnProxy.name, targetClassName.replace(".", "/"));
-
         ClassRemapper ra = new ClassRemapper(cw, new SimpleRemapper(map));
         cnProxy.accept(ra);
 
@@ -152,7 +148,7 @@ public class JavaCardApiProcessor {
         String className;
 
         public ExceptionClassProxy(ClassWriter cv, int classVersion, String exceptionClassName, String superClassName) {
-            super(ASM5, cv);
+            super(ASM4, cv);
             this.superClassName = superClassName;
             this.className = exceptionClassName;
         }
@@ -197,29 +193,13 @@ public class JavaCardApiProcessor {
     static class ClassAdapter extends ClassNode implements Opcodes {
 
         public ClassAdapter(ClassVisitor cv) {
-            super(ASM5);
+            super(ASM4);
             this.cv = cv;
         }
 
         @Override
         public void visitEnd() {
             accept(cv);
-        }
-    }
-
-    static class ClassWriterAdapter extends ClassWriter {
-
-        public ClassWriterAdapter(int flags) {
-            super(flags);
-        }
-
-        public ClassWriterAdapter(ClassReader classReader, int flags) {
-            super(classReader, flags);
-        }
-
-        @Override
-        protected String getCommonSuperClass(String type1, String type2) {
-            return super.getCommonSuperClass(type1, type2);
         }
     }
 
@@ -308,9 +288,7 @@ public class JavaCardApiProcessor {
 
         @Override
         public void visitEnd() {
-            System.out.println("VisitEnd");
             super.visitEnd();
-
             for (Iterator it = cn.fields.iterator();
                     it.hasNext();) {
                 FieldNode fn = (FieldNode) it.next();
