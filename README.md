@@ -56,7 +56,7 @@ assertEquals(0x9000, response.getSW());
 <dependency>
   <groupId>com.klinec</groupId>
   <artifactId>jcardsim</artifactId>
-  <version>3.0.5.9</version>
+  <version>3.0.5.11</version>
 </dependency>
 ```
 
