@@ -62,8 +62,28 @@ assertEquals(0x9000, response.getSW());
 
 Gradle:
 ```groovy
-compile('com.klinec:jcardsim:3.0.5.9')
+implementation('com.klinec:jcardsim:3.0.5.11')
 ```
+
+### RandomData
+
+RandomData class from the javacard API generates random numbers. It is implemented by RandomDataImpl in the JCardSim and by default it's seed is fixed, so after the applet load the random number stream is always the same. The original reason may be having deterministic tests, for example.
+
+However, in [this PR](https://github.com/licel/jcardsim/pull/155), which is already merged in my fork, there are options how to change the default behavior of the RandomData.
+
+If you wish to change the static seed used to seed the RandomData, add the following line before loading the applet (mainly before initializing RandomData), the seed is hex-coded string:
+
+```java
+System.setProperty("com.licel.jcardsim.randomdata.seed", "02");
+```
+
+Or if you want to seed the RandomData from the SecureRandom (non-deterministic):
+
+```java
+System.setProperty("com.licel.jcardsim.randomdata.secure", "1");
+```
+
+https://github.com/licel/jcardsim/pull/155
 
 ### What is the difference from Oracle Java Card Development Kit simulator?
 
